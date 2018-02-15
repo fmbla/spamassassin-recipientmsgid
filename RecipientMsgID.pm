@@ -1,5 +1,5 @@
 package Mail::SpamAssassin::Plugin::RecipientMsgID;
-my $VERSION = 0.1;
+my $VERSION = 0.2;
 
 use strict;
 use Mail::SpamAssassin::Plugin;
@@ -8,6 +8,16 @@ use vars qw(@ISA);
 
 sub dbg {
   Mail::SpamAssassin::Plugin::dbg ("RecipientMsgID: @_");
+}
+
+sub uri_to_domain {
+  my ($self, $domain) = @_;
+
+  if ($Mail::SpamAssassin::VERSION <= 3.004001) {
+    Mail::SpamAssassin::Util::uri_to_domain($domain);
+  } else {
+    $self->{main}->{registryboundaries}->uri_to_domain($domain);
+  }
 }
 
 sub new {
@@ -29,43 +39,48 @@ sub check_msgid_belongs_recipient {
   chomp $message_id;
   $message_id =~ s/\>$//;
 
-  if (defined $message_id && $message_id =~ /\@([^@. \t]+\.[^@ \t]+?)[ \t]*\z/s) {
-    $message_id = lc $1;
+  if (defined $message_id) {
+    $message_id = $self->uri_to_domain($message_id);
   }
+
+  dbg("Message-Id: $message_id");
   return 0 if $message_id eq '';
 
   my $from = lc($pms->get("From:addr"));
   my $replyto = lc($pms->get("Reply-To:addr"));
   my $from_dom = '';
 
-  if (defined $from && $from =~ /\@([^@. \t]+\.[^@ \t]+?)[ \t]*\z/s) {
-    $from_dom = $1;
+  $from_dom = $self->uri_to_domain($from);
+
+  if ($replyto) {
+    $from_dom = $self->uri_to_domain($replyto);
   }
 
-  if (defined $replyto && $replyto =~ /\@([^@. \t]+\.[^@ \t]+?)[ \t]*\z/s) {
-    $from_dom = $1;
-  }
+  dbg("FromDom: $from_dom");
 
   return 0 if $from_dom eq '';
 
   my $matched = 0;
 
-  my @inputs;
+  my @toaddrs;
 
   for ('ToCc', 'Bcc') {
-    my $to = $pms->get($_);     # get recipients
-    $to =~ s/\(.*?\)//g;        # strip out the (comments)
-    push(@inputs, ($to =~ m/([\w.=-]+\@\w+(?:[\w.-]+\.)+\w+)/g));
+    my $to = $pms->get($_ . ":addr");     # get recipients
+    if ($to) {
+      $to = $self->uri_to_domain($to);
+      dbg("ToDom: $to");
+      push(@toaddrs, $to);
+    }
   }
 
-  foreach my $to_addr (@inputs) {
-    $to_addr =~ /\@([^@. \t]+\.[^@ \t]+?)[ \t]*\z/s;
-    if ($1 eq $message_id) {
+  foreach my $to_domain (@toaddrs) {
+    if ($to_domain eq $message_id) {
       $matched = 1;
     }
   }
 
   if (($from_dom ne $message_id) && ($matched == 1)) {
+    dbg("Message ID matches recipient domain");
     return 1;
   }
 
