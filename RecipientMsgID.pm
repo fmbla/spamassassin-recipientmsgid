@@ -43,8 +43,8 @@ sub check_msgid_belongs_recipient {
     $message_id = $self->uri_to_domain($message_id);
   }
 
-  dbg("Message-Id: $message_id");
   return 0 if $message_id eq '';
+  dbg("Message-Id: $message_id");
 
   my $from = lc($pms->get("From:addr"));
   my $replyto = lc($pms->get("Reply-To:addr"));
@@ -56,9 +56,9 @@ sub check_msgid_belongs_recipient {
     $from_dom = $self->uri_to_domain($replyto);
   }
 
-  dbg("FromDom: $from_dom");
-
   return 0 if $from_dom eq '';
+
+  dbg("FromDom: $from_dom");
 
   my $matched = 0;
 
