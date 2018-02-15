@@ -13,7 +13,7 @@ sub dbg {
 sub uri_to_domain {
   my ($self, $domain) = @_;
 
-  if ($Mail::SpamAssassin::VERSION <= 3.004001) {
+  if ($Mail::SpamAssassin::VERSION <= 3.004000) {
     Mail::SpamAssassin::Util::uri_to_domain($domain);
   } else {
     $self->{main}->{registryboundaries}->uri_to_domain($domain);
