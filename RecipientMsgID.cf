@@ -1,1 +1,3 @@
-header MSGID_BELONGS_RECIPIENT eval:check_msgid_belongs_recipient()
+ifplugin Mail::SpamAssassin::Plugin::RecipientMsgID
+  header MSGID_BELONGS_RECIPIENT eval:check_msgid_belongs_recipient()
+endif
