@@ -1,5 +1,5 @@
 package Mail::SpamAssassin::Plugin::RecipientMsgID;
-my $VERSION = 0.2;
+my $VERSION = 0.21;
 
 use strict;
 use Mail::SpamAssassin::Plugin;
