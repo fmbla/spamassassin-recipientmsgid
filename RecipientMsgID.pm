@@ -1,5 +1,5 @@
 package Mail::SpamAssassin::Plugin::RecipientMsgID;
-my $VERSION = 0.22;
+my $VERSION = 0.23;
 
 use strict;
 use Mail::SpamAssassin::Plugin;
@@ -43,7 +43,7 @@ sub check_msgid_belongs_recipient {
     $message_id = $self->uri_to_domain($message_id);
   }
 
-  return 0 if $message_id eq '';
+  return 0 unless defined $message_id;
   dbg("Message-Id: $message_id");
 
   my $from = lc($pms->get("From:addr"));
@@ -56,7 +56,7 @@ sub check_msgid_belongs_recipient {
     $from_dom = $self->uri_to_domain($replyto);
   }
 
-  return 0 if $from_dom eq '';
+  return 0 unless defined $from_dom;
 
   dbg("FromDom: $from_dom");
 
@@ -68,6 +68,7 @@ sub check_msgid_belongs_recipient {
     my $to = $pms->get($_ . ":addr");     # get recipients
     if ($to) {
       $to = $self->uri_to_domain($to);
+      next unless defined $to;
       dbg("ToDom: $to");
       push(@toaddrs, $to);
     }
